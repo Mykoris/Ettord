@@ -1,0 +1,22 @@
+// Lagrer appen og leserbibliotekene lokalt, så den virker uten nett etter første besøk.
+const CACHE = 'ettord-v1';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const lib = /cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com/.test(url.host);
+  if (url.origin === location.origin) {
+    // Nett først (får oppdateringer), lagret kopi uten nett
+    e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); return r; })
+      .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html'))));
+  } else if (lib) {
+    // Bibliotek og skrift: lagret kopi først
+    e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); return r; })));
+  }
+});

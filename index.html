@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="Ett ord">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Ett ord – hurtigleser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: stille, fokusert lesemaskin – ingenting forstyrrer ordet
+   IDEA: et sikte/okular – to tynne linjer med hakk som peker på fikseringsbokstaven
+   PICTURE: det store ordet midt i mørket er selve bildet
+   COLOUR and TYPE: svart, hvit, rød fikseringsbokstav; Atkinson Hyperlegible (laget for lesbarhet)
+   LAYOUT: ord øverst/midt, stor stoppknapp under, finjustering nederst; stables på mobil */
+:root{color-scheme:dark}
+.t-klassisk{--bg:#000;--ink:#fff;--acc:#ff2b2b;--dim:#8c8c8c;--line:#2b2b2b;--panel:#111;--btn:#fff;--btnInk:#000}
+.t-myk{--bg:#141414;--ink:#e6e3de;--acc:#ff5a4c;--dim:#8f8b85;--line:#2c2c2c;--panel:#1d1d1d;--btn:#e6e3de;--btnInk:#141414}
+.t-lys{--bg:#f6f4ef;--ink:#151515;--acc:#d3221a;--dim:#6a6a6a;--line:#d9d4ca;--panel:#fff;--btn:#151515;--btnInk:#f6f4ef}
+.t-sepia{--bg:#f0e5cc;--ink:#36291c;--acc:#b8321f;--dim:#7a6a55;--line:#d6c7a5;--panel:#f8f0dc;--btn:#36291c;--btnInk:#f0e5cc}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display:flex;flex-direction:column;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+header{display:flex;align-items:center;gap:10px;padding:12px max(4vw,14px);flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.01em}
+header .name{color:var(--dim);font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ghost{background:none;border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 14px}
+.ghost:hover{border-color:var(--dim)}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,4vh,40px);padding:0 max(4vw,14px) 18px;max-width:1100px;width:100%;margin:0 auto}
+.stage{position:relative;padding:clamp(26px,6vh,56px) 0;cursor:pointer;user-select:none;-webkit-user-select:none}
+.stage::before,.stage::after{content:"";position:absolute;left:0;right:0;height:1px;background:var(--line)}
+.stage::before{top:0}.stage::after{bottom:0}
+.notch{position:absolute;left:50%;width:2px;height:14px;background:var(--dim);transform:translateX(-50%)}
+.notch.t{top:0}.notch.b{bottom:0}
+.word{display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline;font-size:var(--fs,64px);line-height:1.15;font-weight:400;min-height:1.15em}
+.word span{white-space:pre}
+.word .l{text-align:right}.word .p{color:var(--acc);font-weight:700}.word .r{text-align:left}
+.hint{text-align:center;color:var(--dim);font-size:15px;margin:10px 0 0;min-height:1.5em}
+.meta{display:flex;justify-content:space-between;color:var(--dim);font-size:14px;font-variant-numeric:tabular-nums;gap:10px}
+input[type=range]{width:100%;accent-color:var(--acc);height:28px}
+.controls{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:12px;align-items:stretch;max-width:640px;width:100%;margin:0 auto}
+.big{min-height:96px;border:0;border-radius:22px;background:var(--btn);color:var(--btnInk);font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:14px;transition:transform .08s}
+.big:active{transform:scale(.98)}
+.big.on{background:var(--acc);color:#fff}
+.big svg{width:30px;height:30px}
+.step{border:1px solid var(--line);background:var(--panel);border-radius:18px;display:flex;align-items:center;justify-content:center}
+.step svg{width:26px;height:26px}
+.speed{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.speed .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;min-width:5.5ch;text-align:center}
+.speed .u{color:var(--dim);font-size:14px}
+.round{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-size:24px;line-height:1}
+details.set{max-width:640px;width:100%;margin:0 auto;border-top:1px solid var(--line);padding-top:6px}
+details.set summary{min-height:44px;display:flex;align-items:center;color:var(--dim);cursor:pointer;list-style:none;justify-content:center}
+details.set summary::-webkit-details-marker{display:none}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;padding:8px 0 14px}
+.grid label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--dim)}
+.grid select{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);padding:0 10px;font-size:16px;color:var(--ink)}
+.check{flex-direction:row!important;align-items:center;gap:10px!important;color:var(--ink)!important;min-height:44px}
+.check input{width:22px;height:22px;accent-color:var(--acc)}
+.keys{color:var(--dim);font-size:13px;grid-column:1/-1}
+kbd{border:1px solid var(--line);border-radius:5px;padding:0 5px;font:inherit}
+/* innlasting */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:5;overflow:auto;padding:calc(env(safe-area-inset-top) + 16px) max(4vw,14px) calc(env(safe-area-inset-bottom) + 20px)}
+.ov[hidden]{display:none}
+.box{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.box h2{font-size:clamp(28px,5vw,40px);line-height:1.05;margin:6px 0 0}
+.box p{margin:0;color:var(--dim)}
+textarea{width:100%;min-height:34vh;border-radius:14px;border:1px solid var(--line);background:var(--panel);padding:14px;font-size:16px;resize:vertical;color:var(--ink)}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.drop.over{border-color:var(--acc)}
+.file{display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:12px;background:var(--panel);border:1px solid var(--line);cursor:pointer;font-weight:700}
+.file input{position:absolute;width:1px;height:1px;opacity:0}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.primary{min-height:52px;padding:0 24px;border:0;border-radius:12px;background:var(--btn);color:var(--btnInk);font-weight:700;font-size:17px}
+.status{min-height:1.5em;color:var(--ink)}
+.status.err{color:var(--acc)}
+.small{font-size:13px}
+@media(max-width:600px){
+  .controls{grid-template-columns:60px minmax(0,1fr) 60px;gap:8px}
+  .big{min-height:110px;font-size:26px}
+  .grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){.big{transition:none}}
+</style>
+</head>
+<body class="t-klassisk">
+<header>
+  <h1>Ett ord</h1>
+  <span class="name" id="name"></span>
+  <button class="ghost" id="openIn">Ny tekst</button>
+</header>
+
+<main>
+  <div class="stage" id="stage" aria-live="off">
+    <span class="notch t"></span><span class="notch b"></span>
+    <div class="word" id="word"><span class="l"></span><span class="p"></span><span class="r"></span></div>
+  </div>
+  <p class="hint" id="hint"></p>
+
+  <div>
+    <input type="range" id="seek" min="0" max="0" value="0" aria-label="Posisjon i teksten">
+    <div class="meta"><span id="pos">0 / 0 ord</span><span id="left"></span></div>
+  </div>
+
+  <div class="controls">
+    <button class="step" id="back" aria-label="Forrige setning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+    <button class="big" id="play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span>Start</span></button>
+    <button class="step" id="fwd" aria-label="Neste setning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button>
+  </div>
+
+  <div class="speed">
+    <button class="round" id="slower" aria-label="Saktere">−</button>
+    <span class="v" id="wpm">300</span><span class="u">ord/min</span>
+    <button class="round" id="faster" aria-label="Raskere">+</button>
+  </div>
+
+  <details class="set">
+    <summary>Innstillinger</summary>
+    <div class="grid">
+      <label>Farger
+        <select id="theme">
+          <option value="klassisk">Svart · hvit · rød</option>
+          <option value="myk">Myk mørk (mindre gjenskinn)</option>
+          <option value="lys">Lys</option>
+          <option value="sepia">Sepia</option>
+        </select>
+      </label>
+      <label>Skriftstørrelse
+        <input type="range" id="fs" min="32" max="120" step="2" value="64">
+      </label>
+      <label class="check"><input type="checkbox" id="punct" checked> Pause ved punktum og komma</label>
+      <label class="check"><input type="checkbox" id="rewind" checked> Gå 3 ord tilbake når du fortsetter</label>
+      <p class="keys">Tastatur: <kbd>Mellomrom</kbd> start/stopp · <kbd>←</kbd> <kbd>→</kbd> forrige/neste setning · <kbd>↑</kbd> <kbd>↓</kbd> fart. På mobil kan du også trykke på ordet.</p>
+    </div>
+  </details>
+</main>
+
+<div class="ov" id="ov" hidden>
+  <div class="box">
+    <h2>Hva vil du lese?</h2>
+    <p>Lim inn tekst, eller åpne en fil. Alt behandles i nettleseren din – ingenting lastes opp.</p>
+    <textarea id="ta" placeholder="Lim inn teksten her …"></textarea>
+    <div class="row"><button class="primary" id="useText">Les denne teksten</button><button class="ghost" id="closeIn">Avbryt</button></div>
+    <div class="drop" id="drop">
+      <label class="file">Åpne fil<input type="file" id="fileIn" accept=".pdf,.docx,.epub,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/epub+zip,text/plain"></label>
+      <span class="small" style="color:var(--dim)">PDF, Word (.docx), EPUB og TXT · eller dra filen hit</span>
+    </div>
+    <div class="status" id="status" role="status"></div>
+    <p class="small">Skannede PDF-er (bilder av tekst) og kopibeskyttede e-bøker (DRM, f.eks. Kindle) kan ikke leses. Gamle .doc-filer må lagres som .docx først.</p>
+  </div>
+</div>
+
+<script>
+{
+const $ = s => document.querySelector(s);
+const SAMPLE = "Velkommen til Ett ord. Her vises teksten ett ord om gangen, midt på skjermen, slik at øynene kan stå stille mens du leser. Den røde bokstaven viser hvor blikket skal hvile. Trykk på den store knappen, eller mellomrom på tastaturet, for å starte og stoppe.\n\nTrykk «Ny tekst» øverst for å lime inn din egen tekst eller åpne en PDF, et Word-dokument eller en e-bok.";
+const S = {i:0, wpm:300, fs:64, theme:'klassisk', punct:true, rewind:true, name:''};
+let words = [], timer = null, playing = false, ramp = 0, lock = null;
+
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); return true; } catch(e){ return false; } }
+};
+
+function tokenize(text){
+  text = text.replace(/\r/g,'').replace(/­/g,'')
+    .replace(/([A-Za-zÀ-ÿ])-\n\s*([a-zà-ÿ])/g,'$1$2');
+  const out = [];
+  for (const para of text.split(/\n\s*\n+/)) {
+    const ws = para.split(/\s+/).filter(Boolean);
+    ws.forEach((w,k) => {
+      let end = 0;
+      if (/[.!?…]["»”')\]]*$/.test(w)) end = 2;
+      else if (/[,;:–—]["»”')\]]*$/.test(w)) end = 1;
+      if (k === ws.length-1) end = 3;
+      out.push({w, end});
+    });
+  }
+  return out;
+}
+
+function orp(w){
+  const m = w.match(/^[^\p{L}\p{N}]*/u); const lead = m ? m[0].length : 0;
+  const core = w.slice(lead).replace(/[^\p{L}\p{N}]+$/u,'').length || 1;
+  const o = core <= 1 ? 0 : core <= 5 ? 1 : core <= 9 ? 2 : core <= 13 ? 3 : 4;
+  return Math.min(w.length-1, lead + o);
+}
+
+function delay(t){
+  let m = 1;
+  if (S.punct) m *= t.end === 3 ? 2.6 : t.end === 2 ? 2.1 : t.end === 1 ? 1.45 : 1;
+  if (t.w.length > 8) m *= 1 + (t.w.length - 8) * 0.045;
+  if (ramp < 6) m *= 1.6 - ramp * 0.1;
+  return 60000 / S.wpm * m;
+}
+
+const wl = $('#word .l'), wp = $('#word .p'), wr = $('#word .r'), stage = $('#stage');
+function render(){
+  const n = words.length;
+  if (!n) { wl.textContent=''; wp.textContent=''; wr.textContent=''; }
+  else {
+    const w = words[S.i].w, p = orp(w);
+    const left = w.slice(0,p), right = w.slice(p+1);
+    const half = stage.clientWidth / 2, side = Math.max(left.length + .5, right.length + .5);
+    const fit = Math.floor(half / (side * 0.6));
+    document.body.style.setProperty('--fs', Math.min(S.fs, Math.max(18, fit)) + 'px');
+    wl.textContent = left; wp.textContent = w[p]; wr.textContent = right;
+  }
+  $('#seek').max = Math.max(0, n-1); $('#seek').value = S.i;
+  $('#pos').textContent = n ? `${(S.i+1).toLocaleString('no')} / ${n.toLocaleString('no')} ord` : '0 / 0 ord';
+  const mins = (n - S.i) / S.wpm;
+  $('#left').textContent = n ? (mins < 1 ? `${Math.max(1,Math.round(mins*60))} sek igjen` : `${Math.round(mins)} min igjen`) : '';
+}
+
+function setBtn(){
+  const b = $('#play');
+  b.classList.toggle('on', playing);
+  b.innerHTML = playing
+    ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg><span>Stopp</span>'
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span>${S.i>0 && S.i<words.length-1 ? 'Fortsett' : 'Start'}</span>`;
+  $('#hint').textContent = playing ? '' : (words.length ? 'Trykk på ordet, knappen eller mellomrom' : '');
+}
+
+function tick(){
+  render();
+  timer = setTimeout(() => {
+    if (S.i < words.length - 1) { S.i++; ramp++; if (S.i % 25 === 0) save(); tick(); }
+    else { stop(); $('#hint').textContent = 'Ferdig! Trykk Start for å lese på nytt.'; }
+  }, delay(words[S.i]));
+}
+
+async function play(){
+  if (!words.length) return;
+  if (S.i >= words.length - 1) S.i = 0;
+  else if (S.rewind && S.i > 0) S.i = Math.max(0, S.i - 3);
+  playing = true; ramp = 0; setBtn(); tick();
+  try { lock = await navigator.wakeLock?.request('screen'); } catch(e){ lock = null; }
+}
+function stop(){
+  clearTimeout(timer); playing = false; setBtn(); render(); save();
+  try { lock?.release(); } catch(e){} lock = null;
+}
+const toggle = () => playing ? stop() : play();
+
+function sentence(dir){
+  if (!words.length) return;
+  let i = S.i;
+  if (dir < 0) {
+    i = Math.max(0, i - 2);
+    while (i > 0 && words[i-1].end < 2) i--;
+  } else {
+    while (i < words.length - 1 && words[i].end < 2) i++;
+    i = Math.min(words.length - 1, i + 1);
+  }
+  S.i = i; ramp = 0;
+  if (playing) { clearTimeout(timer); tick(); } else { render(); setBtn(); }
+}
+
+function setWpm(v){
+  S.wpm = Math.max(100, Math.min(1200, v));
+  $('#wpm').textContent = S.wpm; render(); saveSet();
+}
+
+function saveSet(){ store.set('ettord-set', JSON.stringify({wpm:S.wpm, fs:S.fs, theme:S.theme, punct:S.punct, rewind:S.rewind})); }
+function save(){ store.set('ettord-pos', JSON.stringify({i:S.i, name:S.name})); }
+
+function setText(text, name, i){
+  stop();
+  words = tokenize(text);
+  S.i = Math.min(i || 0, Math.max(0, words.length - 1));
+  S.name = name || '';
+  $('#name').textContent = S.name;
+  if (!store.set('ettord-text', text)) store.set('ettord-text', '');
+  save(); render(); setBtn();
+}
+
+/* ---------- filer ---------- */
+const libs = {};
+function loadScript(src){
+  return libs[src] ||= new Promise((ok, bad) => {
+    const s = document.createElement('script'); s.src = src; s.onload = ok;
+    s.onerror = () => { delete libs[src]; bad(new Error('Kunne ikke laste leseren for denne filtypen. Sjekk nettforbindelsen.')); };
+    document.head.appendChild(s);
+  });
+}
+const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/';
+
+async function readPdf(buf){
+  await loadScript(CDN + 'pdf.js/3.11.174/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = CDN + 'pdf.js/3.11.174/pdf.worker.min.js';
+  const doc = await pdfjsLib.getDocument({data: buf}).promise;
+  let out = '';
+  for (let p = 1; p <= doc.numPages; p++) {
+    status(`Leser side ${p} av ${doc.numPages} …`);
+    const tc = await (await doc.getPage(p)).getTextContent();
+    let lastY = null, lastEnd = null, lh = 12;
+    for (const it of tc.items) {
+      if (!('str' in it)) continue;
+      const x = it.transform[4], y = it.transform[5], h = Math.abs(it.transform[3]) || it.height || 12;
+      if (lastY !== null) {
+        const dy = Math.abs(y - lastY);
+        if (dy > h * 1.9) out += '\n\n';
+        else if (dy > 1) out += '\n';
+        else if (lastEnd !== null && x - lastEnd > h * 0.15 && !/\s$/.test(out) && !/^\s/.test(it.str)) out += ' ';
+      }
+      out += it.str;
+      if (it.str.trim()) { lastY = y; lastEnd = x + it.width; lh = h; }
+      if (it.hasEOL) { out += '\n'; lastEnd = null; }
+    }
+    out += '\n';
+  }
+  return out;
+}
+
+async function readDocx(buf){
+  await loadScript(CDN + 'mammoth/1.6.0/mammoth.browser.min.js');
+  const r = await mammoth.extractRawText({arrayBuffer: buf});
+  return r.value;
+}
+
+const BLOCK = /^(p|div|h[1-6]|li|blockquote|section|article|br|tr|dd|dt|figcaption|pre)$/i;
+function walk(node, acc){
+  for (const c of node.childNodes) {
+    if (c.nodeType === 3) acc.push(c.nodeValue);
+    else if (c.nodeType === 1) {
+      const tag = c.localName || '';
+      if (/^(script|style|head)$/i.test(tag)) continue;
+      const b = BLOCK.test(tag);
+      if (b) acc.push('\n\n');
+      walk(c, acc);
+      if (b) acc.push('\n\n');
+    }
+  }
+}
+async function readEpub(buf){
+  await loadScript(CDN + 'jszip/3.10.1/jszip.min.js');
+  const zip = await JSZip.loadAsync(buf);
+  const xml = s => new DOMParser().parseFromString(s, 'application/xml');
+  const cont = zip.file('META-INF/container.xml');
+  if (!cont) throw new Error('Fant ikke innholdet i e-boken.');
+  const opfPath = xml(await cont.async('string')).querySelector('rootfile').getAttribute('full-path');
+  const base = opfPath.includes('/') ? opfPath.slice(0, opfPath.lastIndexOf('/') + 1) : '';
+  const opf = xml(await zip.file(opfPath).async('string'));
+  if (zip.file('META-INF/encryption.xml')) {
+    const enc = await zip.file('META-INF/encryption.xml').async('string');
+    if (/EncryptedData/.test(enc) && !/font/i.test(enc)) throw new Error('E-boken er kopibeskyttet (DRM) og kan ikke leses.');
+  }
+  const man = {};
+  opf.querySelectorAll('manifest > item').forEach(it => man[it.getAttribute('id')] = it.getAttribute('href'));
+  const spine = [...opf.querySelectorAll('spine > itemref')].map(r => man[r.getAttribute('idref')]).filter(Boolean);
+  let out = '';
+  for (let k = 0; k < spine.length; k++) {
+    status(`Leser kapittel ${k+1} av ${spine.length} …`);
+    const path = decodeURIComponent(base + spine[k].split('#')[0]);
+    const f = zip.file(path); if (!f) continue;
+    const src = await f.async('string');
+    let d = new DOMParser().parseFromString(src, 'application/xhtml+xml');
+    if (d.querySelector('parsererror')) d = new DOMParser().parseFromString(src, 'text/html');
+    const acc = []; walk(d.body || d.documentElement, acc);
+    out += acc.join('').replace(/[ \t]+/g,' ') + '\n\n';
+  }
+  return out;
+}
+
+function status(msg, err){ const s = $('#status'); s.textContent = msg || ''; s.classList.toggle('err', !!err); }
+
+async function handleFile(f){
+  if (!f) return;
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  try {
+    status('Åpner ' + f.name + ' …');
+    let text;
+    if (ext === 'pdf') text = await readPdf(await f.arrayBuffer());
+    else if (ext === 'docx') text = await readDocx(await f.arrayBuffer());
+    else if (ext === 'epub') text = await readEpub(await f.arrayBuffer());
+    else if (ext === 'txt' || ext === 'md' || f.type.startsWith('text/')) text = await f.text();
+    else if (ext === 'doc') throw new Error('Gamle Word-filer (.doc) støttes ikke. Åpne filen i Word og lagre som .docx eller PDF.');
+    else if (/^(mobi|azw3?|kfx)$/.test(ext)) throw new Error('Kindle-formater støttes ikke. Bruk EPUB (f.eks. konverter med Calibre hvis boken ikke er kopibeskyttet).');
+    else throw new Error('Ukjent filtype. Bruk PDF, DOCX, EPUB eller TXT.');
+    if (!text || text.trim().split(/\s+/).length < 2) throw new Error(ext === 'pdf' ? 'Fant ingen tekst. PDF-en er trolig skannet (bilder av tekst).' : 'Fant ingen tekst i filen.');
+    setText(text, f.name, 0);
+    status(''); closeIn();
+  } catch(e) { status(e.message || 'Noe gikk galt med filen.', true); }
+}
+
+/* ---------- innlasting-panel ---------- */
+const ov = $('#ov');
+function openIn(){ if (playing) stop(); ov.hidden = false; status(''); setTimeout(() => $('#ta').focus(), 50); }
+function closeIn(){ ov.hidden = true; }
+$('#openIn').onclick = openIn;
+$('#closeIn').onclick = closeIn;
+$('#useText').onclick = () => {
+  const t = $('#ta').value.trim();
+  if (!t) { status('Lim inn litt tekst først.', true); return; }
+  setText(t, 'Innlimt tekst', 0); $('#ta').value = ''; closeIn();
+};
+$('#fileIn').onchange = e => { handleFile(e.target.files[0]); e.target.value = ''; };
+const drop = $('#drop');
+['dragenter','dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); if (ov.hidden && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+/* ---------- kontroller ---------- */
+$('#play').onclick = toggle;
+stage.onclick = toggle;
+$('#back').onclick = () => sentence(-1);
+$('#fwd').onclick = () => sentence(1);
+$('#slower').onclick = () => setWpm(S.wpm - 25);
+$('#faster').onclick = () => setWpm(S.wpm + 25);
+$('#seek').oninput = e => { S.i = +e.target.value; ramp = 0; if (playing) { clearTimeout(timer); tick(); } else { render(); setBtn(); } };
+$('#seek').onchange = save;
+function applyTheme(){
+  document.body.className = 't-' + S.theme;
+  const bg = getComputedStyle(document.body).getPropertyValue('--bg').trim();
+  document.querySelector('meta[name=theme-color]').content = bg;
+  document.documentElement.style.colorScheme = (S.theme === 'lys' || S.theme === 'sepia') ? 'light' : 'dark';
+}
+$('#theme').onchange = e => { S.theme = e.target.value; applyTheme(); saveSet(); };
+$('#fs').oninput = e => { S.fs = +e.target.value; render(); saveSet(); };
+$('#punct').onchange = e => { S.punct = e.target.checked; saveSet(); };
+$('#rewind').onchange = e => { S.rewind = e.target.checked; saveSet(); };
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !ov.hidden) { closeIn(); return; }
+  const t = e.target;
+  if (!ov.hidden || t.matches('textarea, input[type=text], select')) return;
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) toggle(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); sentence(-1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); sentence(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); setWpm(S.wpm + 25); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); setWpm(S.wpm - 25); }
+});
+// mellomrom skal ikke "klikke" en fokusert knapp i tillegg
+document.addEventListener('keyup', e => { if (e.code === 'Space' && e.target.tagName === 'BUTTON' && ov.hidden) e.preventDefault(); });
+$('#play').addEventListener('keydown', e => { if (e.code === 'Space' || e.key === 'Enter') e.preventDefault(); if (e.key === 'Enter') toggle(); });
+
+document.addEventListener('visibilitychange', () => { if (document.hidden && playing) stop(); });
+window.addEventListener('pagehide', save);
+new ResizeObserver(() => render()).observe(stage);
+
+/* ---------- oppstart ---------- */
+try { Object.assign(S, JSON.parse(store.get('ettord-set') || '{}')); } catch(e){}
+$('#theme').value = S.theme; $('#fs').value = S.fs; $('#punct').checked = S.punct; $('#rewind').checked = S.rewind;
+$('#wpm').textContent = S.wpm; applyTheme();
+let pos = {}; try { pos = JSON.parse(store.get('ettord-pos') || '{}'); } catch(e){}
+const saved = store.get('ettord-text');
+if (saved) setText(saved, pos.name, pos.i); else setText(SAMPLE, 'Eksempeltekst', 0);
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
