@@ -60,15 +60,6 @@ input[type=range]{width:100%;accent-color:var(--acc);height:28px}
 .speed .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;min-width:5.5ch;text-align:center}
 .speed .u{color:var(--dim);font-size:14px}
 .round{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-size:24px;line-height:1}
-
-.full{display:none;position:relative;max-height:min(54vh,600px);overflow:auto;font-size:19px;line-height:1.75;padding:14px 6px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overscroll-behavior:contain}
-.full p{margin:0 0 1em;max-width:70ch;margin-inline:auto}
-.full span{cursor:pointer;border-radius:4px;padding:0 1px}
-.full span:hover{background:var(--line)}
-.full .cur{color:var(--acc);font-weight:700;outline:2px solid var(--acc);outline-offset:1px}
-.full .more{color:var(--dim);text-align:center;font-size:14px}
-body.paused .full{display:block}
-body.paused .stage{display:none}
 details.set{max-width:640px;width:100%;margin:0 auto;border-top:1px solid var(--line);padding-top:6px}
 details.set summary{min-height:44px;display:flex;align-items:center;color:var(--dim);cursor:pointer;list-style:none;justify-content:center}
 details.set summary::-webkit-details-marker{display:none}
@@ -115,7 +106,6 @@ textarea{width:100%;min-height:34vh;border-radius:14px;border:1px solid var(--li
     <span class="notch t"></span><span class="notch b"></span>
     <div class="word" id="word"><span class="l"></span><span class="p"></span><span class="r"></span></div>
   </div>
-  <div class="full" id="full" aria-label="Hele teksten"></div>
   <p class="hint" id="hint"></p>
 
   <div>
@@ -163,23 +153,20 @@ textarea{width:100%;min-height:34vh;border-radius:14px;border:1px solid var(--li
     <textarea id="ta" placeholder="Lim inn teksten her …"></textarea>
     <div class="row"><button class="primary" id="useText">Les denne teksten</button><button class="ghost" id="closeIn">Avbryt</button></div>
     <div class="drop" id="drop">
-      <div class="row" style="justify-content:center">
-        <label class="file">Åpne fil<input type="file" id="fileIn" accept=".pdf,.docx,.epub,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/epub+zip,text/plain"></label>
-        <label class="file">Bilder / kamera<input type="file" id="imgIn" accept="image/*" multiple></label>
-      </div>
-      <span class="small" style="color:var(--dim)">PDF, Word (.docx), EPUB, TXT eller bilder av tekst · eller dra filene hit</span>
+      <label class="file">Åpne fil<input type="file" id="fileIn" accept=".pdf,.docx,.epub,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/epub+zip,text/plain"></label>
+      <span class="small" style="color:var(--dim)">PDF, Word (.docx), EPUB og TXT · eller dra filen hit</span>
     </div>
     <div class="status" id="status" role="status"></div>
-    <p class="small">Bilder: ta bildet rett ovenfra med godt lys, og velg gjerne flere sider samtidig – de leses i rekkefølge. Skannede PDF-er og kopibeskyttede e-bøker (DRM, f.eks. Kindle) kan ikke leses. Gamle .doc-filer må lagres som .docx først.</p>
+    <p class="small">Skannede PDF-er (bilder av tekst) og kopibeskyttede e-bøker (DRM, f.eks. Kindle) kan ikke leses. Gamle .doc-filer må lagres som .docx først.</p>
   </div>
 </div>
 
 <script>
 {
 const $ = s => document.querySelector(s);
-const SAMPLE = "Velkommen til Ett ord. Her vises teksten ett ord om gangen, midt på skjermen, slik at øynene kan stå stille mens du leser. Den røde bokstaven viser hvor blikket skal hvile. Trykk på den store knappen, eller mellomrom på tastaturet, for å starte og stoppe.\n\nTrykk «Ny tekst» øverst for å lime inn din egen tekst eller åpne en PDF, et Word-dokument, en e-bok eller et bilde av en tekst.";
+const SAMPLE = "Velkommen til Ett ord. Her vises teksten ett ord om gangen, midt på skjermen, slik at øynene kan stå stille mens du leser. Den røde bokstaven viser hvor blikket skal hvile. Trykk på den store knappen, eller mellomrom på tastaturet, for å starte og stoppe.\n\nTrykk «Ny tekst» øverst for å lime inn din egen tekst eller åpne en PDF, et Word-dokument eller en e-bok.";
 const S = {i:0, wpm:300, fs:64, theme:'klassisk', punct:true, rewind:true, name:''};
-let words = [], timer = null, playing = false, ramp = 0, lock = null, noRewind = false, fullRange = null;
+let words = [], timer = null, playing = false, ramp = 0, lock = null;
 
 const store = {
   get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
@@ -232,7 +219,6 @@ function render(){
   }
   $('#seek').max = Math.max(0, n-1); $('#seek').value = S.i;
   $('#pos').textContent = n ? `${(S.i+1).toLocaleString('no')} / ${n.toLocaleString('no')} ord` : '0 / 0 ord';
-  if (document.body.classList.contains('paused')) mark();
   const mins = (n - S.i) / S.wpm;
   $('#left').textContent = n ? (mins < 1 ? `${Math.max(1,Math.round(mins*60))} sek igjen` : `${Math.round(mins)} min igjen`) : '';
 }
@@ -243,11 +229,7 @@ function setBtn(){
   b.innerHTML = playing
     ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg><span>Stopp</span>'
     : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span>${S.i>0 && S.i<words.length-1 ? 'Fortsett' : 'Start'}</span>`;
-  $('#hint').textContent = playing ? 'Trykk på ordet for å pause' : (words.length ? 'Trykk på et ord for å fortsette derfra' : '');
-  const was = document.body.classList.contains('paused');
-  const now = !playing && words.length > 0;
-  document.body.classList.toggle('paused', now);
-  if (now && !was) mark();
+  $('#hint').textContent = playing ? '' : (words.length ? 'Trykk på ordet, knappen eller mellomrom' : '');
 }
 
 function tick(){
@@ -261,8 +243,7 @@ function tick(){
 async function play(){
   if (!words.length) return;
   if (S.i >= words.length - 1) S.i = 0;
-  else if (S.rewind && S.i > 0 && !noRewind) S.i = Math.max(0, S.i - 3);
-  noRewind = false;
+  else if (S.rewind && S.i > 0) S.i = Math.max(0, S.i - 3);
   playing = true; ramp = 0; setBtn(); tick();
   try { lock = await navigator.wakeLock?.request('screen'); } catch(e){ lock = null; }
 }
@@ -282,7 +263,7 @@ function sentence(dir){
     while (i < words.length - 1 && words[i].end < 2) i++;
     i = Math.min(words.length - 1, i + 1);
   }
-  S.i = i; ramp = 0; noRewind = true;
+  S.i = i; ramp = 0;
   if (playing) { clearTimeout(timer); tick(); } else { render(); setBtn(); }
 }
 
@@ -298,44 +279,11 @@ function setText(text, name, i){
   stop();
   words = tokenize(text);
   S.i = Math.min(i || 0, Math.max(0, words.length - 1));
-  S.name = name || ''; fullRange = null; noRewind = false;
+  S.name = name || '';
   $('#name').textContent = S.name;
   if (!store.set('ettord-text', text)) store.set('ettord-text', '');
   save(); render(); setBtn();
 }
-
-/* ---------- hele teksten ved pause ---------- */
-const full = $('#full');
-const esc = t => t.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function buildFull(){
-  const n = words.length, W = 1500;
-  let a = Math.max(0, S.i - W), b = Math.min(n, S.i + W);
-  for (let g = 0; a > 0 && words[a-1].end !== 3 && g < 400; g++) a--;
-  for (let g = 0; b < n && words[b-1].end !== 3 && g < 400; g++) b++;
-  let h = a > 0 ? '<p class="more">… tidligere tekst – dra i linjen under for å gå dit</p><p>' : '<p>';
-  for (let k = a; k < b; k++) {
-    h += `<span data-k="${k}">${esc(words[k].w)}</span> `;
-    if (words[k].end === 3 && k < b-1) h += '</p><p>';
-  }
-  h += '</p>' + (b < n ? '<p class="more">… fortsetter</p>' : '');
-  full.innerHTML = h; fullRange = [a, b];
-}
-function mark(){
-  if (!words.length) { full.innerHTML = ''; return; }
-  if (!fullRange || S.i < fullRange[0] || S.i >= fullRange[1]) buildFull();
-  full.querySelector('.cur')?.classList.remove('cur');
-  const el = full.querySelector(`[data-k="${S.i}"]`);
-  if (!el) return;
-  el.classList.add('cur');
-  const top = el.offsetTop - full.clientHeight / 2 + el.offsetHeight / 2;
-  full.scrollTop = Math.max(0, top);
-}
-full.addEventListener('click', e => {
-  const k = e.target.dataset && e.target.dataset.k;
-  if (k == null) return;
-  S.i = +k; noRewind = true; ramp = 0; render(); setBtn(); save();
-});
-full.addEventListener('dblclick', e => { if (e.target.dataset && e.target.dataset.k != null) play(); });
 
 /* ---------- filer ---------- */
 const libs = {};
@@ -425,52 +373,6 @@ async function readEpub(buf){
   return out;
 }
 
-async function readImages(files){
-  status('Laster tekstgjenkjenning (første gang tar det litt tid) …');
-  await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
-  let k = 0;
-  const worker = await Tesseract.createWorker(['nor', 'eng'], 1, {
-    logger: m => { if (m.status === 'recognizing text') status(`Leser bilde ${k} av ${files.length}: ${Math.round(m.progress * 100)} %`); }
-  });
-  let out = '';
-  try {
-    for (const f of files) {
-      k++;
-      status(`Leser bilde ${k} av ${files.length} …`);
-      const { data } = await worker.recognize(await shrink(f));
-      out += data.text + '\n\n';
-    }
-  } finally { await worker.terminate(); }
-  return out;
-}
-async function shrink(f){
-  try {
-    const bmp = await createImageBitmap(f);
-    const max = 2800, sc = Math.min(1, max / Math.max(bmp.width, bmp.height));
-    const c = document.createElement('canvas');
-    c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
-    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-    return c;
-  } catch(e) { return f; }
-}
-const isImg = f => f.type.startsWith('image/') || /\.(jpe?g|png|heic|heif|webp|gif|bmp|tiff?)$/i.test(f.name);
-async function handleImages(list){
-  const files = [...list].filter(isImg).sort((a, b) => a.name.localeCompare(b.name, 'no', {numeric: true}));
-  if (!files.length) return;
-  try {
-    const text = await readImages(files);
-    if (!text || text.trim().split(/\s+/).length < 2) throw new Error('Fant ingen tekst i bildet. Prøv med skarpere bilde og bedre lys.');
-    setText(text, files.length > 1 ? `${files.length} bilder` : files[0].name, 0);
-    status(''); closeIn();
-  } catch(e) { status(e.message || 'Kunne ikke lese bildet.', true); }
-}
-async function handleFiles(list){
-  const arr = [...list];
-  if (!arr.length) return;
-  if (arr.every(isImg)) return handleImages(arr);
-  return handleFile(arr.find(f => !isImg(f)));
-}
-
 function status(msg, err){ const s = $('#status'); s.textContent = msg || ''; s.classList.toggle('err', !!err); }
 
 async function handleFile(f){
@@ -503,14 +405,13 @@ $('#useText').onclick = () => {
   if (!t) { status('Lim inn litt tekst først.', true); return; }
   setText(t, 'Innlimt tekst', 0); $('#ta').value = ''; closeIn();
 };
-$('#fileIn').onchange = e => { handleFiles(e.target.files); e.target.value = ''; };
-$('#imgIn').onchange = e => { handleImages(e.target.files); e.target.value = ''; };
+$('#fileIn').onchange = e => { handleFile(e.target.files[0]); e.target.value = ''; };
 const drop = $('#drop');
 ['dragenter','dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave','drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
-drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+drop.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
 document.addEventListener('dragover', e => e.preventDefault());
-document.addEventListener('drop', e => { e.preventDefault(); if (ov.hidden && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+document.addEventListener('drop', e => { e.preventDefault(); if (ov.hidden && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
 
 /* ---------- kontroller ---------- */
 $('#play').onclick = toggle;
@@ -519,11 +420,10 @@ $('#back').onclick = () => sentence(-1);
 $('#fwd').onclick = () => sentence(1);
 $('#slower').onclick = () => setWpm(S.wpm - 25);
 $('#faster').onclick = () => setWpm(S.wpm + 25);
-$('#seek').oninput = e => { S.i = +e.target.value; ramp = 0; noRewind = true; if (playing) { clearTimeout(timer); tick(); } else { render(); setBtn(); } };
+$('#seek').oninput = e => { S.i = +e.target.value; ramp = 0; if (playing) { clearTimeout(timer); tick(); } else { render(); setBtn(); } };
 $('#seek').onchange = save;
 function applyTheme(){
-  document.body.classList.remove('t-klassisk','t-myk','t-lys','t-sepia');
-  document.body.classList.add('t-' + S.theme);
+  document.body.className = 't-' + S.theme;
   const bg = getComputedStyle(document.body).getPropertyValue('--bg').trim();
   document.querySelector('meta[name=theme-color]').content = bg;
   document.documentElement.style.colorScheme = (S.theme === 'lys' || S.theme === 'sepia') ? 'light' : 'dark';
